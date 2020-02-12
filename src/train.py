@@ -9,6 +9,7 @@ import numpy as np
 import tensorflow as tf
 import time
 import tqdm
+import pandas as pd
 from tensorflow.core.protobuf import rewriter_config_pb2
 
 import model, sample, encoder
@@ -52,6 +53,7 @@ parser.add_argument('--val_batch_size', metavar='SIZE', type=int, default=2, hel
 parser.add_argument('--val_batch_count', metavar='N', type=int, default=40, help='Number of batches for validation.')
 parser.add_argument('--val_every', metavar='STEPS', type=int, default=0, help='Calculate validation loss every STEPS steps.')
 
+loss_file =[]
 
 def maketree(path):
     try:
@@ -240,6 +242,7 @@ def main():
             v_summary = sess.run(val_loss_summary, feed_dict={val_loss: v_val_loss})
             summary_log.add_summary(v_summary, counter)
             summary_log.flush()
+
             print(
                 '[{counter} | {time:2.2f}] validation loss = {loss:2.2f}'
                 .format(
@@ -278,7 +281,7 @@ def main():
 
                 avg_loss = (avg_loss[0] * 0.99 + v_loss,
                             avg_loss[1] * 0.99 + 1.0)
-
+                loss_file.append([counter, v_loss, avg_loss[0] / avg_loss[1]])
                 print(
                     '[{counter} | {time:2.2f}] loss={loss:2.2f} avg={avg:2.2f}'
                     .format(
@@ -290,6 +293,8 @@ def main():
                 counter += 1
         except KeyboardInterrupt:
             print('interrupted')
+            save_file = pd.DataFrame(loss_file)
+            save_file.to_csv('./textgen.csv')
             save()
 
 
